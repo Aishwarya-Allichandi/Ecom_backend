@@ -3,7 +3,10 @@ const express=require('express')
 const cors =require('cors');
 const bcrypt =require('bcrypt')
 const jWt=require('jsonwebtoken')
+const sendMail=require('./gmail')
 const dotenv=require('dotenv')
+const nodemailer=require('nodemailer')
+const helmet=require('helmet') //seurity headers
 dotenv.config()
 const {rateLimit}=require('express-rate-limit')
 let secretkey=process.env.SECRETKEY
@@ -44,6 +47,7 @@ const limiter = rateLimit({
 
 ////middleware
 app.use(cors())
+app.use(helmet())
 
 app.use(limiter)
 
@@ -87,12 +91,33 @@ app.post('/products',async(req,res)=>{
       const{title,price,image}=req.body
       await productsmodel.create({title,price,image})
       res.status(201).json({msg:"products are added successfully"})
+      let transporter=await nodemailer.createTransport({
+      service:'gmail',
+      auth:{
+        user:process.env.GMAIL_USER,
+        pass:process.env.GMAIL_APP_PASSWORD
+      }
+    })
+    let mailOptions={
+      from:process.env.GMAIL_USER,
+      to:'chrohankumar@12345@gmail.com',
+      subject:'PRODUCT UPDATE',
+      html:`A new product is added in our store`
+    }
+
+    transporter.sendMail(mailOptions,(err)=>{
+      if(err) throw err
+      console.log('email sent successfully')
+    })
     }catch(error){
       res.json({
         msg:error.message
       })
     }
    })
+
+
+
 
 
 //api 3 --> fetch the data from the db and send these data to client
@@ -107,6 +132,22 @@ app.get('/products',async(req,res)=>{
     })
   }
 })
+
+//route parameters
+app.get('/products/:id',async(req,res)=>{
+  id=req.params.id
+  let singleproduct=await productsmodel.findById(id)
+  res.json(singleproduct)
+})
+
+//query parameters
+app.get('/details',(req,res)=>{
+  let location=req.query.location;
+  let age=req.query.age;
+  let company=req.query.company;
+  res.send(`this person is in ${location} and his age is ${age} and he is working at ${company}`)
+})
+
 
 app.delete('/products',async(req,res)=>{
   try{
@@ -156,8 +197,29 @@ app.post('/register',async(req,res)=>{
     if(users) return res.json("user already exists")
       //hasspassword
     let hassedpassword =await bcrypt.hash(password,10)
-    await usermodel.create({email,username,password:hassedpassword})
+    await usermodel.create({email,username,password:hassedpassword});
+    
     res.status(201).json("registration successful")
+
+    let transporter=await nodemailer.createTransport({
+      service:'gmail',
+      auth:{
+        user:process.env.GMAIL_USER,
+        pass:process.env.GMAIL_APP_PASSWORD
+      }
+    })
+    let mailOptions={
+      from:process.env.GMAIL_USER,
+      to:email,
+      subject:'ACOOUNT REGISTRATION',
+      html:`hi ${username} your accout is created sucessfully`
+    }
+
+    transporter.sendMail(mailOptions,(err)=>{
+      if(err) throw err
+      console.log('email sent successfully')
+    })
+
   }catch (error){
     res.json({msg:error.message})
   }
@@ -176,6 +238,12 @@ app.post('/login',async(req,res)=>{
     let token= jWt.sign(payload,secretkey,{expiresIn:'1h'})
     res.json({msg:"login successful",token:token
     }) 
+
+    
+  
+
+
+
   } catch(err){
     res.json({
       msg:err.message
