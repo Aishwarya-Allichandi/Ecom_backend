@@ -17,7 +17,7 @@ const port=process.env.port
 //step 1 require the package means import mongoose
 const mongoose=require('mongoose');
 
-//sste 2 establish a connection
+//step 2 establish a connection
 //connection string
 async function connection(){
   await mongoose.connect(process.env.MONGODBURL)
@@ -63,7 +63,7 @@ app.get('/',(req,res)=>{
 
 /
 
-////design an api where seller send the product (data) now
+
 
 
 //let finalproducts= await productsmodel.findOne({title:'chair'})

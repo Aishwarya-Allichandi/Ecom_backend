@@ -11,14 +11,14 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-// Email configuration
+// Email configuration process
 const mailOptions = {
   from: process.env.GMAIL_USER,
-    to: 'sabrinpendari786@gmail.com', 
+    to: '', 
   subject: 'Test Email from Gmail',
   text: 'Hello! This is a test email sent through Gmail using Nodemailer.',
   html: `
-    <h2>Hello from aishu!</h2>
+    <h2>Hello !!!!!</h2>
   `
 };
 
